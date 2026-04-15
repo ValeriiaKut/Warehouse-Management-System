@@ -33,7 +33,10 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
+import com.example.frontend.model.LoginModel
+import com.example.frontend.viewmodel.LoginViewModel
 
 
 @Composable
@@ -44,6 +47,7 @@ fun LoginView(navController: NavController) {
     val darkGray = Color(0xFF3D3D3F)
     val gray = Color(0xFF464545)
     val lightGreen = Color(0xFF587059)
+    val viewModel: LoginViewModel = viewModel()
 
 
 
@@ -158,7 +162,13 @@ fun LoginView(navController: NavController) {
 
 
             Button(
-                onClick = { },
+                onClick = {
+                    viewModel.login(
+                        loginData = LoginModel(email, password)
+                    ) { token ->
+                        navController.navigate("home")
+                    }
+                },
                 modifier = Modifier.fillMaxWidth().height(50.dp),
                 colors = ButtonDefaults.buttonColors(
                     containerColor = lightGreen
@@ -168,5 +178,6 @@ fun LoginView(navController: NavController) {
             }
         }
     }
+
 }
 
