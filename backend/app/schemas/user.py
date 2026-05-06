@@ -6,7 +6,7 @@ class UserCreate(BaseModel): # dane do rejestracji
     username: str
     email: EmailStr
     password: str
-
+    role: str = "worker"
 
 class UserLogin(BaseModel): # dane do logowania
     email: EmailStr
@@ -17,7 +17,8 @@ class UserResponse(BaseModel): # odpowiedź z API
     id: int
     username: str
     email: EmailStr
-
+    role: str
+    
     class Config:
         from_attributes = True
 

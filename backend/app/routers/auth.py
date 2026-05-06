@@ -50,6 +50,7 @@ def register(user: UserCreate, db: Session = Depends(get_db)):
         username=user.username,
         email=user.email,
         hashed_password=hash_password(user.password),
+        role=user.role,
     )
 # zapis do db
     db.add(new_user)
@@ -85,4 +86,14 @@ def read_current_user(current_user: User = Depends(get_current_user)):
         "id": current_user.id,
         "username": current_user.username,
         "email": current_user.email,
+        "role": current_user.role,
     }
+# funkcja sprawdzająca czy użytkownik jest adminem
+def get_current_admin(current_user: User = Depends(get_current_user)):
+    if current_user.role != "admin":
+        raise HTTPException(
+            status_code=403,
+            detail="Admin access required",
+        )
+
+    return current_user
