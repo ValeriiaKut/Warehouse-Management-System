@@ -160,14 +160,9 @@ fun LoginView(navController: NavController) {
 
             Spacer(modifier = Modifier.height(30.dp))
 
-
             Button(
                 onClick = {
-                    viewModel.login(
-                        loginData = LoginModel(email, password)
-                    ) { token ->
-                        navController.navigate("home")
-                    }
+                    navController.navigate("home")
                 },
                 modifier = Modifier.fillMaxWidth().height(50.dp),
                 colors = ButtonDefaults.buttonColors(
@@ -176,6 +171,23 @@ fun LoginView(navController: NavController) {
             ) {
                 Text("Sign In", color = Color.White, fontSize = 16.sp)
             }
+
+
+//            Button(
+//                onClick = {
+//                    viewModel.login(
+//                        loginData = LoginModel(email, password)
+//                    ) { token ->
+//                        navController.navigate("home")
+//                    }
+//                },
+//                modifier = Modifier.fillMaxWidth().height(50.dp),
+//                colors = ButtonDefaults.buttonColors(
+//                    containerColor = lightGreen
+//                )
+//            ) {
+//                Text("Sign In", color = Color.White, fontSize = 16.sp)
+//            }
         }
     }
 
