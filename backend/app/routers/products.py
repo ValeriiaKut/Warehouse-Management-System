@@ -4,7 +4,7 @@ from sqlalchemy.orm import Session
 from app.db.database import get_db
 from app.models.product import Product
 from app.models.user import User
-from app.routers.auth import get_current_user
+from app.routers.auth import get_current_admin, get_current_user
 from app.schemas.product import ProductCreate, ProductResponse, ProductUpdate
 
 router = APIRouter(prefix="/products", tags=["products"]) # router dla produktów
@@ -14,7 +14,7 @@ router = APIRouter(prefix="/products", tags=["products"]) # router dla produktó
 def create_product(
     product: ProductCreate,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(get_current_admin),
 ):
     existing_product = db.query(Product).filter(Product.sku == product.sku).first() # sprawdzamy czy SKU już istnieje
 
@@ -40,10 +40,28 @@ def create_product(
 #-------------------------------------------------------endpoint do pobierania wszystkich produktów----------------------------------------------------------
 @router.get("", response_model=list[ProductResponse])
 def get_products(
+    search: str | None = None,
+    min_price: float | None = None,
+    max_price: float | None = None,
+    low_stock: bool = False,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
-    return db.query(Product).all() #pobieramy wszystkie produkty z bazy
+    query = db.query(Product)
+
+    if search:
+        query = query.filter(Product.name.ilike(f"%{search}%"))
+
+    if min_price is not None:
+        query = query.filter(Product.price >= min_price)
+
+    if max_price is not None:
+        query = query.filter(Product.price <= max_price)
+
+    if low_stock:
+        query = query.filter(Product.quantity <= 5)
+
+    return query.all()
 
 #--------------------------------------------------endpoint do pobierania produktu po id--------------------------------------------------------------------
 @router.get("/{product_id}", response_model=ProductResponse)
@@ -65,7 +83,7 @@ def update_product(
     product_id: int,
     product_data: ProductUpdate,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(get_current_admin),
 ):
     product = db.query(Product).filter(Product.id == product_id).first() # szukamy produktu
 
@@ -99,7 +117,7 @@ def update_product(
 def delete_product(
     product_id: int,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(get_current_admin),
 ):
     product = db.query(Product).filter(Product.id == product_id).first() # szukamy produktu
 
