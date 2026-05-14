@@ -2,15 +2,15 @@ from fastapi import APIRouter, Depends, HTTPException
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from sqlalchemy.orm import Session
 
-from app.core.security import (
+from app.security import (
     create_access_token,
     decode_access_token,
     hash_password,
     verify_password,
 )
-from app.db.database import get_db
-from app.models.user import User
-from app.schemas.user import TokenResponse, UserCreate, UserLogin, UserResponse
+from app.database import get_db
+from app.models import User
+from app.schemas import TokenResponse, UserCreate, UserLogin, UserResponse
 
 router = APIRouter(prefix="/auth", tags=["auth"]) # tworzymy router dla auth
 security = HTTPBearer() #Bearer token
@@ -70,9 +70,13 @@ def login(user: UserLogin, db: Session = Depends(get_db)):
     if not verify_password(user.password, db_user.hashed_password):  #sprawdzamy hasło
         raise HTTPException(status_code=401, detail="Invalid email or password")
 
-    access_token = create_access_token(  #tworzymy token JWT
-        data={"sub": db_user.email, "user_id": db_user.id}
-    )
+    access_token = create_access_token(
+    data={
+        "sub": db_user.email,
+        "user_id": db_user.id,
+        "role": db_user.role,
+    }
+)
 
     return {
         "access_token": access_token,

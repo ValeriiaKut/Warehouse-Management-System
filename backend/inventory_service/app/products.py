@@ -1,11 +1,10 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
-from app.db.database import get_db
-from app.models.product import Product
-from app.models.user import User
-from app.routers.auth import get_current_admin, get_current_user
-from app.schemas.product import ProductCreate, ProductResponse, ProductUpdate
+from app.database import get_db
+from app.models import Product
+from app.security import get_current_user, get_current_admin
+from app.schemas import ProductCreate, ProductResponse, ProductUpdate
 
 router = APIRouter(prefix="/products", tags=["products"]) # router dla produktów
 
@@ -14,7 +13,7 @@ router = APIRouter(prefix="/products", tags=["products"]) # router dla produktó
 def create_product(
     product: ProductCreate,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_admin),
+    current_user: dict = Depends(get_current_admin),
 ):
     existing_product = db.query(Product).filter(Product.sku == product.sku).first() # sprawdzamy czy SKU już istnieje
 
@@ -45,7 +44,7 @@ def get_products(
     max_price: float | None = None,
     low_stock: bool = False,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user),
+    current_user: dict = Depends(get_current_user),
 ):
     query = db.query(Product)
 
@@ -68,7 +67,7 @@ def get_products(
 def get_product_by_id(
     product_id: int,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user),
+    current_user: dict = Depends(get_current_user),
 ):
     product = db.query(Product).filter(Product.id == product_id).first()
  # szukamy produktu
@@ -83,7 +82,7 @@ def update_product(
     product_id: int,
     product_data: ProductUpdate,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_admin),
+    current_user: dict = Depends(get_current_admin),
 ):
     product = db.query(Product).filter(Product.id == product_id).first() # szukamy produktu
 
@@ -117,14 +116,22 @@ def update_product(
 def delete_product(
     product_id: int,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_admin),
+    current_user: dict = Depends(get_current_admin),
 ):
-    product = db.query(Product).filter(Product.id == product_id).first() # szukamy produktu
+    product = db.query(Product).filter(Product.id == product_id).first()
 
     if not product:
         raise HTTPException(status_code=404, detail="Product not found")
 
-    db.delete(product)  # usuwamy produkt
-    db.commit()
+    try:
+        db.delete(product)
+        db.commit()
+
+    except Exception:
+        db.rollback()
+        raise HTTPException(
+            status_code=400,
+            detail="Cannot delete product because it is used in orders",
+        )
 
     return {"message": "Product deleted successfully"}
