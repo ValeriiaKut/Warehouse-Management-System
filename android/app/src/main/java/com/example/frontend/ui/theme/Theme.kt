@@ -9,18 +9,31 @@ import androidx.compose.material3.dynamicDarkColorScheme
 import androidx.compose.material3.dynamicLightColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 
 private val DarkColorScheme = darkColorScheme(
-    primary = Purple80,
-    secondary = PurpleGrey80,
-    tertiary = Pink80
+    primary = WarehouseGreenBright,
+    secondary = WarehouseGreen,
+    tertiary = WarehouseMuted,
+    background = WarehouseBackground,
+    surface = WarehouseSurface,
+    onPrimary = WarehouseBackground,
+    onSecondary = WarehouseText,
+    onBackground = WarehouseText,
+    onSurface = WarehouseText
 )
 
 private val LightColorScheme = lightColorScheme(
-    primary = Purple40,
-    secondary = PurpleGrey40,
-    tertiary = Pink40
+    primary = WarehouseGreen,
+    secondary = WarehouseGreenBright,
+    tertiary = WarehouseMuted,
+    background = WarehouseText,
+    surface = Color(0xFFE9EEE9),
+    onPrimary = Color.White,
+    onSecondary = WarehouseBackground,
+    onBackground = WarehouseBackground,
+    onSurface = WarehouseBackground
 
     /* Other default colors to override
     background = Color(0xFFFFFBFE),
@@ -37,7 +50,7 @@ private val LightColorScheme = lightColorScheme(
 fun FRONTENDTheme(
     darkTheme: Boolean = isSystemInDarkTheme(),
     // Dynamic color is available on Android 12+
-    dynamicColor: Boolean = true,
+    dynamicColor: Boolean = false,
     content: @Composable () -> Unit
 ) {
     val colorScheme = when {
