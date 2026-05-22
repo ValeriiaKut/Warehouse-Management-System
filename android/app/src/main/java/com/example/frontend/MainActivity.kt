@@ -8,6 +8,7 @@ import androidx.activity.enableEdgeToEdge
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import com.example.frontend.views.AddProductView
 import com.example.frontend.views.HomeView
 import com.example.frontend.views.RegisterView
 
@@ -21,7 +22,18 @@ class MainActivity : ComponentActivity() {
             NavHost(navController = navController, startDestination = "login") {
                 composable("login") { LoginView(navController) }
                 composable("register") { RegisterView(navController) }
-                composable ( "home") { HomeView(navController) }
+                composable("home") {
+                    HomeView(navController = navController)
+                }
+                composable("addProduct") {
+                    AddProductView(
+                        navController = navController,
+                        onAdd = { product ->
+                            // TODO: ViewModel / API
+                            navController.popBackStack()
+                        }
+                    )
+                }
             } }
     }
 }
