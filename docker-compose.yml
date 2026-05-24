@@ -1,0 +1,60 @@
+
+
+services:
+  db:
+    image: postgres:15
+    container_name: warehouse_db
+    restart: always
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: warehouse_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  auth_service:
+    build: ./backend/auth_service
+    container_name: auth_service
+    restart: always
+    ports:
+      - "8001:8000"
+    environment:
+      DATABASE_URL: postgresql://postgres:postgres@db:5432/warehouse_db
+      JWT_SECRET: super_secret_key
+      JWT_ALGORITHM: HS256
+      ACCESS_TOKEN_EXPIRE_MINUTES: 60
+    depends_on:
+      - db
+
+  inventory_service:
+    build: ./backend/inventory_service
+    container_name: inventory_service
+    restart: always
+    ports:
+      - "8002:8000"
+    environment:
+      DATABASE_URL: postgresql://postgres:postgres@db:5432/warehouse_db
+      JWT_SECRET: super_secret_key
+      JWT_ALGORITHM: HS256
+      ACCESS_TOKEN_EXPIRE_MINUTES: 60
+    depends_on:
+      - db
+
+  orders_service:
+    build: ./backend/orders_service
+    container_name: orders_service
+    restart: always
+    ports:
+      - "8003:8000"
+    environment:
+      DATABASE_URL: postgresql://postgres:postgres@db:5432/warehouse_db
+      JWT_SECRET: super_secret_key
+      JWT_ALGORITHM: HS256
+      ACCESS_TOKEN_EXPIRE_MINUTES: 60
+    depends_on:
+      - db
+
+volumes:
+  postgres_data:
