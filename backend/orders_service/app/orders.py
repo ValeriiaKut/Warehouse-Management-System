@@ -1,12 +1,11 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
-from app.db.database import get_db
-from app.models.order import Order, OrderItem
-from app.models.product import Product
-from app.models.user import User
-from app.routers.auth import get_current_user, get_current_admin
-from app.schemas.order import OrderCreate, OrderResponse
+from app.database import get_db
+from app.models import Order, OrderItem
+from app.product_model import Product
+from app.security import get_current_admin, get_current_user
+from app.schemas import OrderCreate, OrderResponse
 
 router = APIRouter(prefix="/orders", tags=["orders"])
 
@@ -16,7 +15,7 @@ router = APIRouter(prefix="/orders", tags=["orders"])
 def create_order(
     order_data: OrderCreate,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user),
+    current_user: dict = Depends(get_current_user),
 ):
     if not order_data.items:
         raise HTTPException(
@@ -26,7 +25,7 @@ def create_order(
 
     # tworzymy zamówienie
     new_order = Order(
-        user_id=current_user.id,
+        user_id=current_user["user_id"],
         status="PENDING",
     )
 
@@ -80,7 +79,7 @@ def create_order(
 @router.get("", response_model=list[OrderResponse])
 def get_orders(
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user),
+    current_user: dict = Depends(get_current_user),
 ):
     return db.query(Order).all()
 
@@ -90,7 +89,7 @@ def get_orders(
 def get_order_by_id(
     order_id: int,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user),
+    current_user: dict = Depends(get_current_user),
 ):
     order = db.query(Order).filter(Order.id == order_id).first()
 
@@ -109,7 +108,7 @@ def update_order_status(
     order_id: int,
     status: str,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_admin),
+    current_user: dict = Depends(get_current_admin),
 ):
     allowed_statuses = [
         "PENDING",
@@ -146,7 +145,7 @@ def update_order_status(
 def delete_order(
     order_id: int,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_admin),
+    current_user: dict = Depends(get_current_admin),
 ):
     order = db.query(Order).filter(Order.id == order_id).first()
 
