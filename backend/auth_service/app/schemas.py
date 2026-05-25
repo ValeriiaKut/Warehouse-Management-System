@@ -1,5 +1,5 @@
 #Schematy do walidacji danych
-from pydantic import BaseModel, EmailStr
+from pydantic import BaseModel, EmailStr, field_validator
 
 
 class UserCreate(BaseModel): # dane do rejestracji
@@ -7,6 +7,16 @@ class UserCreate(BaseModel): # dane do rejestracji
     email: EmailStr
     password: str
     role: str = "worker"
+    @field_validator("password")
+    @classmethod
+    def validate_password(cls, value):
+        if len(value) < 8:
+            raise ValueError("Password must have at least 8 characters")
+
+        if not any(char.isdigit() for char in value):
+            raise ValueError("Password must contain at least one number")
+
+        return value
 
 class UserLogin(BaseModel): # dane do logowania
     email: EmailStr

@@ -1,20 +1,26 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Request
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from sqlalchemy.orm import Session
+from slowapi import Limiter
+from slowapi.util import get_remote_address
 
-from app.core.security import (
+import logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger("auth_service")
+
+from app.security import (
     create_access_token,
     decode_access_token,
     hash_password,
     verify_password,
 )
-from app.db.database import get_db
-from app.models.user import User
-from app.schemas.user import TokenResponse, UserCreate, UserLogin, UserResponse
+from app.database import get_db
+from app.models import User
+from app.schemas import TokenResponse, UserCreate, UserLogin, UserResponse
 
 router = APIRouter(prefix="/auth", tags=["auth"]) # tworzymy router dla auth
 security = HTTPBearer() #Bearer token
-
+limiter = Limiter(key_func=get_remote_address)
 
 def get_current_user( # funkcja do pobrania aktualnego użytkownika z tokena
     credentials: HTTPAuthorizationCredentials = Depends(security),
@@ -44,6 +50,7 @@ def register(user: UserCreate, db: Session = Depends(get_db)):
     ).first()
 
     if existing_user:
+        logger.warning(f"Registration failed, user already exists: {user.email}")
         raise HTTPException(status_code=400, detail="Username or email already exists")
 
     new_user = User( #tworzymy nowego użytkownika
@@ -56,30 +63,50 @@ def register(user: UserCreate, db: Session = Depends(get_db)):
     db.add(new_user)
     db.commit()
     db.refresh(new_user)
+    logger.info(f"New user registered: {new_user.email}, role={new_user.role}")
 
     return new_user
 
 #---------------------------------------------------------endpoint do logowania---------------------------------------------------------------------------
 @router.post("/login", response_model=TokenResponse)
-def login(user: UserLogin, db: Session = Depends(get_db)):
-    db_user = db.query(User).filter(User.email == user.email).first() #szukamy użytkownika po emailu
+@limiter.limit("5/minute")
+def login(
+    request: Request,
+    user: UserLogin,
+    db: Session = Depends(get_db)
+):
+    # szukamy użytkownika po emailu
+    db_user = db.query(User).filter(User.email == user.email).first()
 
     if not db_user:
-        raise HTTPException(status_code=401, detail="Invalid email or password")
+        logger.warning(f"Failed login attempt for email: {user.email}")
+        raise HTTPException(
+            status_code=401,
+            detail="Invalid email or password"
+        )
 
-    if not verify_password(user.password, db_user.hashed_password):  #sprawdzamy hasło
-        raise HTTPException(status_code=401, detail="Invalid email or password")
+    # sprawdzamy hasło
+    if not verify_password(user.password, db_user.hashed_password):
+        raise HTTPException(
+            status_code=401,
+            detail="Invalid email or password"
+        )
 
-    access_token = create_access_token(  #tworzymy token JWT
-        data={"sub": db_user.email, "user_id": db_user.id}
+    access_token = create_access_token(
+        data={
+            "sub": db_user.email,
+            "user_id": db_user.id,
+            "role": db_user.role,
+        }
     )
+
+    logger.info(f"User logged in: {db_user.email}, role={db_user.role}")
 
     return {
         "access_token": access_token,
         "token_type": "bearer",
     }
-
-#-----------------------------------------------------endpoint chroniony – zwraca dane aktualnego użytkownika-----------------------------------------------------
+#-----------------------------------------------------endpoint chroniony/zwraca dane aktualnego użytkownika-----------------------------------------------------
 @router.get("/me")
 def read_current_user(current_user: User = Depends(get_current_user)):
     return {
