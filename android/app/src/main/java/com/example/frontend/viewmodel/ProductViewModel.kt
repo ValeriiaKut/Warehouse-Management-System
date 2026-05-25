@@ -11,22 +11,35 @@ import com.example.frontend.model.ProductModel
 import com.example.frontend.model.ProductUpdate
 import com.example.frontend.state.ProductState
 import kotlinx.coroutines.launch
+import retrofit2.HttpException
 
 class ProductViewModel : ViewModel() {
 
     var state by mutableStateOf(ProductState())
         private set
 
-    fun loadProducts(token: String) {
+    fun loadProducts(
+        token: String,
+        search: String? = null,
+        minPrice: Float? = null,
+        maxPrice: Float? = null,
+        lowStock: Boolean = false
+    ) {
         viewModelScope.launch {
             state = state.copy(isLoading = true, error = null)
 
             try {
-                val products = RetrofitClient.api.getProducts("Bearer $token")
+                val products = RetrofitClient.api.getProducts(
+                    authorization = "Bearer $token",
+                    search = search?.takeIf { it.isNotBlank() },
+                    minPrice = minPrice,
+                    maxPrice = maxPrice,
+                    lowStock = lowStock
+                )
                 state = state.copy(products = products, isLoading = false)
 
             } catch (e: Exception) {
-                state = state.copy(error = e.message, isLoading = false)
+                state = state.copy(error = e.readableMessage(), isLoading = false)
             }
         }
     }
@@ -53,7 +66,7 @@ class ProductViewModel : ViewModel() {
                 )
                 onSuccess()
             } catch (e: Exception) {
-                state = state.copy(error = e.message, isLoading = false)
+                state = state.copy(error = e.readableMessage(), isLoading = false)
             }
         }
     }
@@ -83,7 +96,7 @@ class ProductViewModel : ViewModel() {
                 )
                 onSuccess()
             } catch (e: Exception) {
-                state = state.copy(error = e.message, isLoading = false)
+                state = state.copy(error = e.readableMessage(), isLoading = false)
             }
         }
     }
@@ -103,8 +116,17 @@ class ProductViewModel : ViewModel() {
                     isLoading = false
                 )
             } catch (e: Exception) {
-                state = state.copy(error = e.message, isLoading = false)
+                state = state.copy(error = e.readableMessage(), isLoading = false)
             }
         }
+    }
+
+    private fun Exception.readableMessage(): String {
+        if (this is HttpException) {
+            return response()?.errorBody()?.string()?.takeIf { it.isNotBlank() }
+                ?: "Request failed with code ${code()}"
+        }
+
+        return message ?: "Something went wrong"
     }
 }
