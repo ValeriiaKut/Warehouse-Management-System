@@ -5,13 +5,13 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.frontend.data.ApiErrorMapper
 import com.example.frontend.data.RetrofitClient
 import com.example.frontend.model.ProductCreate
 import com.example.frontend.model.ProductModel
 import com.example.frontend.model.ProductUpdate
 import com.example.frontend.state.ProductState
 import kotlinx.coroutines.launch
-import retrofit2.HttpException
 
 class ProductViewModel : ViewModel() {
 
@@ -26,10 +26,10 @@ class ProductViewModel : ViewModel() {
         lowStock: Boolean = false
     ) {
         viewModelScope.launch {
-            state = state.copy(isLoading = true, error = null)
+            state = state.copy(isLoading = true, error = null, successMessage = null)
 
             try {
-                val products = RetrofitClient.api.getProducts(
+                val products = RetrofitClient.inventoryApi.getProducts(
                     authorization = "Bearer $token",
                     search = search?.takeIf { it.isNotBlank() },
                     minPrice = minPrice,
@@ -39,17 +39,17 @@ class ProductViewModel : ViewModel() {
                 state = state.copy(products = products, isLoading = false)
 
             } catch (e: Exception) {
-                state = state.copy(error = e.readableMessage(), isLoading = false)
+                setError(e)
             }
         }
     }
 
     fun addProduct(product: ProductModel, token: String, onSuccess: () -> Unit) {
         viewModelScope.launch {
-            state = state.copy(isLoading = true, error = null)
+            state = state.copy(isLoading = true, error = null, successMessage = null)
 
             try {
-                val createdProduct = RetrofitClient.api.createProduct(
+                val createdProduct = RetrofitClient.inventoryApi.createProduct(
                     authorization = "Bearer $token",
                     product = ProductCreate(
                         name = product.name,
@@ -62,21 +62,22 @@ class ProductViewModel : ViewModel() {
 
                 state = state.copy(
                     products = state.products + createdProduct,
-                    isLoading = false
+                    isLoading = false,
+                    successMessage = "Product created successfully."
                 )
                 onSuccess()
             } catch (e: Exception) {
-                state = state.copy(error = e.readableMessage(), isLoading = false)
+                setError(e)
             }
         }
     }
 
     fun updateProduct(product: ProductModel, token: String, onSuccess: () -> Unit) {
         viewModelScope.launch {
-            state = state.copy(isLoading = true, error = null)
+            state = state.copy(isLoading = true, error = null, successMessage = null)
 
             try {
-                val updatedProduct = RetrofitClient.api.updateProduct(
+                val updatedProduct = RetrofitClient.inventoryApi.updateProduct(
                     authorization = "Bearer $token",
                     productId = product.id,
                     product = ProductUpdate(
@@ -92,41 +93,46 @@ class ProductViewModel : ViewModel() {
                     products = state.products.map {
                         if (it.id == updatedProduct.id) updatedProduct else it
                     },
-                    isLoading = false
+                    isLoading = false,
+                    successMessage = "Product updated successfully."
                 )
                 onSuccess()
             } catch (e: Exception) {
-                state = state.copy(error = e.readableMessage(), isLoading = false)
+                setError(e)
             }
         }
     }
 
     fun deleteProduct(productId: Int, token: String) {
         viewModelScope.launch {
-            state = state.copy(isLoading = true, error = null)
+            state = state.copy(isLoading = true, error = null, successMessage = null)
 
             try {
-                RetrofitClient.api.deleteProduct(
+                RetrofitClient.inventoryApi.deleteProduct(
                     authorization = "Bearer $token",
                     productId = productId
                 )
 
                 state = state.copy(
                     products = state.products.filterNot { it.id == productId },
-                    isLoading = false
+                    isLoading = false,
+                    successMessage = "Product deleted successfully."
                 )
             } catch (e: Exception) {
-                state = state.copy(error = e.readableMessage(), isLoading = false)
+                setError(e)
             }
         }
     }
 
-    private fun Exception.readableMessage(): String {
-        if (this is HttpException) {
-            return response()?.errorBody()?.string()?.takeIf { it.isNotBlank() }
-                ?: "Request failed with code ${code()}"
-        }
+    fun resetSessionExpired() {
+        state = state.copy(sessionExpired = false)
+    }
 
-        return message ?: "Something went wrong"
+    private fun setError(error: Exception) {
+        state = state.copy(
+            error = ApiErrorMapper.message(error),
+            isLoading = false,
+            sessionExpired = ApiErrorMapper.isUnauthorized(error)
+        )
     }
 }

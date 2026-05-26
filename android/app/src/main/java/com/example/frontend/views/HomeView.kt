@@ -16,6 +16,8 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Inventory2
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
@@ -45,6 +47,7 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import com.example.frontend.data.TokenManager
+import com.example.frontend.model.ProductModel
 import com.example.frontend.viewmodel.OrderViewModel
 import com.example.frontend.viewmodel.ProductViewModel
 
@@ -66,6 +69,7 @@ fun HomeView(
     var minPrice by remember { mutableStateOf("") }
     var maxPrice by remember { mutableStateOf("") }
     var lowStockOnly by remember { mutableStateOf(false) }
+    var productPendingDelete by remember { mutableStateOf<ProductModel?>(null) }
 
     LaunchedEffect(token, search, minPrice, maxPrice, lowStockOnly) {
         if (token == null) {
@@ -211,6 +215,11 @@ fun HomeView(
                 Text(text = it, color = Color(0xFFFF8A80))
             }
 
+            state.successMessage?.let {
+                Text(text = it, color = green)
+                Spacer(modifier = Modifier.height(12.dp))
+            }
+
             if (!state.isLoading && state.products.isEmpty()) {
                 Surface(
                     modifier = Modifier.fillMaxWidth(),
@@ -245,15 +254,38 @@ fun HomeView(
                             navController.navigate("editProduct/${it.id}")
                         },
                         onDelete = {
-                            val currentToken = TokenManager.getToken(context)
-                            if (currentToken != null) {
-                                viewModel.deleteProduct(it.id, currentToken)
-                            }
+                            productPendingDelete = it
                         }
                     )
                 }
             }
         }
+    }
+
+    productPendingDelete?.let { product ->
+        AlertDialog(
+            onDismissRequest = { productPendingDelete = null },
+            title = { Text("Delete product") },
+            text = { Text("Delete ${product.name}? This cannot be undone.") },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        val currentToken = TokenManager.getToken(context)
+                        if (currentToken != null) {
+                            viewModel.deleteProduct(product.id, currentToken)
+                        }
+                        productPendingDelete = null
+                    }
+                ) {
+                    Text("Delete")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { productPendingDelete = null }) {
+                    Text("Cancel")
+                }
+            }
+        )
     }
 }
 

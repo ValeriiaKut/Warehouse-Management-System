@@ -141,6 +141,11 @@ fun OrdersView(
                 Spacer(modifier = Modifier.height(12.dp))
             }
 
+            orderState.successMessage?.let {
+                Text(text = it, color = green)
+                Spacer(modifier = Modifier.height(12.dp))
+            }
+
             if (!orderState.isLoading && orderState.orders.isEmpty()) {
                 Surface(
                     modifier = Modifier.fillMaxWidth(),

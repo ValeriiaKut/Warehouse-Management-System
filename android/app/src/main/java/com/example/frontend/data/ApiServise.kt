@@ -74,6 +74,12 @@ interface ApiService {
         @Path("orderId") orderId: Int,
         @Query("status") status: String
     ): OrderModel
+
+    @DELETE("orders/{orderId}")
+    suspend fun deleteOrder(
+        @Header("Authorization") authorization: String,
+        @Path("orderId") orderId: Int
+    )
 }
 
 data class LoginResponse(

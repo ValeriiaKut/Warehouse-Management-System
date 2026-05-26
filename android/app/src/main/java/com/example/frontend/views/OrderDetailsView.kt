@@ -15,6 +15,9 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.ReceiptLong
+import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
@@ -24,6 +27,10 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
@@ -55,6 +62,7 @@ fun OrderDetailsView(
     val surface = Color(0xFF1B221E)
     val green = Color(0xFF7BC88A)
     val muted = Color(0xFFA7B2AA)
+    var showDeleteDialog by remember { mutableStateOf(false) }
 
     LaunchedEffect(token, orderId) {
         if (token == null) {
@@ -132,6 +140,15 @@ fun OrderDetailsView(
                     }
                 }
             )
+            Spacer(modifier = Modifier.height(12.dp))
+            TextButton(onClick = { showDeleteDialog = true }) {
+                Icon(
+                    imageVector = Icons.Default.Delete,
+                    contentDescription = "Delete order",
+                    tint = Color(0xFFFF8A80)
+                )
+                Text(text = "Delete order", color = Color(0xFFFF8A80))
+            }
         } else {
             Surface(
                 modifier = Modifier.fillMaxWidth(),
@@ -151,6 +168,39 @@ fun OrderDetailsView(
             Spacer(modifier = Modifier.height(12.dp))
             Text(text = it, color = Color(0xFFFF8A80), fontSize = 14.sp)
         }
+
+        orderState.successMessage?.let {
+            Spacer(modifier = Modifier.height(12.dp))
+            Text(text = it, color = green, fontSize = 14.sp)
+        }
+    }
+
+    if (showDeleteDialog && order != null) {
+        AlertDialog(
+            onDismissRequest = { showDeleteDialog = false },
+            title = { Text("Delete order") },
+            text = { Text("Delete order #${order.id}? This cannot be undone.") },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        val currentToken = TokenManager.getToken(context)
+                        if (currentToken != null) {
+                            orderViewModel.deleteOrder(order.id, currentToken) {
+                                navController.popBackStack()
+                            }
+                        }
+                        showDeleteDialog = false
+                    }
+                ) {
+                    Text("Delete")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showDeleteDialog = false }) {
+                    Text("Cancel")
+                }
+            }
+        )
     }
 }
 
