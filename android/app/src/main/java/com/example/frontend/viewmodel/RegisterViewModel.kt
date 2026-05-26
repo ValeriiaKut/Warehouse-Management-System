@@ -5,6 +5,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.frontend.data.AuthErrorMapper
 import com.example.frontend.data.RetrofitClient
 import com.example.frontend.model.RegisterModel
 import kotlinx.coroutines.launch
@@ -19,10 +20,10 @@ class RegisterViewModel : ViewModel() {
             errorMessage = null
 
             try {
-                RetrofitClient.api.register(registerData)
+                RetrofitClient.authApi.register(registerData)
                 onSuccess()
             } catch (e: Exception) {
-                errorMessage = "Registration error: ${e.localizedMessage}"
+                errorMessage = AuthErrorMapper.registerMessage(e)
             } finally {
                 isLoading = false
             }

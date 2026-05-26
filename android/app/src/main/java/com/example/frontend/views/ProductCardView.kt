@@ -29,6 +29,7 @@ import com.example.frontend.model.ProductModel
 @Composable
 fun ProductCardView(
     product: ProductModel,
+    canManageProducts: Boolean,
     onEdit: (ProductModel) -> Unit,
     onDelete: (ProductModel) -> Unit
 ) {
@@ -75,23 +76,25 @@ fun ProductCardView(
                         )
                     }
 
-                    Spacer(modifier = Modifier.height(6.dp))
+                    if (canManageProducts) {
+                        Spacer(modifier = Modifier.height(6.dp))
 
-                    Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-                        IconButton(onClick = { onEdit(product) }) {
-                            Icon(
-                                imageVector = Icons.Default.Edit,
-                                contentDescription = "Edit product",
-                                tint = Color(0xFF7BC88A)
-                            )
-                        }
+                        Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                            IconButton(onClick = { onEdit(product) }) {
+                                Icon(
+                                    imageVector = Icons.Default.Edit,
+                                    contentDescription = "Edit product",
+                                    tint = Color(0xFF7BC88A)
+                                )
+                            }
 
-                        IconButton(onClick = { onDelete(product) }) {
-                            Icon(
-                                imageVector = Icons.Default.Delete,
-                                contentDescription = "Delete product",
-                                tint = Color(0xFFFF8A80)
-                            )
+                            IconButton(onClick = { onDelete(product) }) {
+                                Icon(
+                                    imageVector = Icons.Default.Delete,
+                                    contentDescription = "Delete product",
+                                    tint = Color(0xFFFF8A80)
+                                )
+                            }
                         }
                     }
                 }
@@ -106,6 +109,10 @@ fun ProductCardView(
                 fontWeight = FontWeight.Bold
             )
 
+            Spacer(modifier = Modifier.height(8.dp))
+
+            StockBadge(quantity = product.quantity)
+
             product.description?.takeIf { it.isNotBlank() }?.let {
                 Spacer(modifier = Modifier.height(8.dp))
                 Text(
@@ -115,5 +122,27 @@ fun ProductCardView(
                 )
             }
         }
+    }
+}
+
+@Composable
+private fun StockBadge(quantity: Int) {
+    val (label, color) = when {
+        quantity <= 0 -> "Out of stock" to Color(0xFFFF8A80)
+        quantity <= 5 -> "Low stock" to Color(0xFFFFD166)
+        else -> "In stock" to Color(0xFF7BC88A)
+    }
+
+    Surface(
+        color = color.copy(alpha = 0.18f),
+        shape = RoundedCornerShape(8.dp)
+    ) {
+        Text(
+            text = label,
+            color = color,
+            fontSize = 12.sp,
+            fontWeight = FontWeight.Bold,
+            modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp)
+        )
     }
 }

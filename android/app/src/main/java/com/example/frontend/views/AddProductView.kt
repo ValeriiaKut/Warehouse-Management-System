@@ -35,7 +35,9 @@ import com.example.frontend.model.ProductModel
 fun AddProductView(
     onAdd: (ProductModel) -> Unit,
     navController: NavController,
-    productToEdit: ProductModel? = null
+    productToEdit: ProductModel? = null,
+    errorMessage: String? = null,
+    isLoading: Boolean = false
 ) {
     var name by remember(productToEdit) { mutableStateOf(productToEdit?.name.orEmpty()) }
     var sku by remember(productToEdit) { mutableStateOf(productToEdit?.sku.orEmpty()) }
@@ -94,6 +96,11 @@ fun AddProductView(
 
         Spacer(modifier = Modifier.height(26.dp))
 
+        errorMessage?.let {
+            Text(text = it, color = Color(0xFFFF8A80), fontSize = 14.sp)
+            Spacer(modifier = Modifier.height(12.dp))
+        }
+
         Button(
             onClick = {
                 val product = ProductModel(
@@ -106,6 +113,7 @@ fun AddProductView(
                 )
                 onAdd(product)
             },
+            enabled = !isLoading,
             modifier = Modifier
                 .fillMaxWidth()
                 .height(54.dp),
@@ -116,7 +124,12 @@ fun AddProductView(
             )
         ) {
             Text(
-                text = if (productToEdit == null) "Save Product" else "Update Product",
+                text = when {
+                    isLoading && productToEdit == null -> "Saving..."
+                    isLoading -> "Updating..."
+                    productToEdit == null -> "Save Product"
+                    else -> "Update Product"
+                },
                 fontWeight = FontWeight.Bold,
                 fontSize = 16.sp
             )

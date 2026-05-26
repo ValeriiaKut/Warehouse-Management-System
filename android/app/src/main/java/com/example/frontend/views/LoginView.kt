@@ -160,23 +160,38 @@ fun LoginView(navController: NavController) {
 
             viewModel.errorMessage?.let { message ->
                 Spacer(modifier = Modifier.height(12.dp))
-                Text(text = message, color = Color(0xFFFF8A80), fontSize = 14.sp)
+                val retryText = if (viewModel.retrySeconds > 0) {
+                    " Try again in ${viewModel.retrySeconds}s."
+                } else {
+                    ""
+                }
+                Text(text = message + retryText, color = Color(0xFFFF8A80), fontSize = 14.sp)
             }
 
             Spacer(modifier = Modifier.height(24.dp))
 
             Button(
                 onClick = {
-                    viewModel.login(
-                        loginData = LoginModel(email, password)
-                    ) { token ->
-                        TokenManager.saveToken(context, token)
-                        navController.navigate("home") {
-                            popUpTo("login") { inclusive = true }
+                    when {
+                        email.isBlank() -> {
+                            viewModel.errorMessage = "Enter your email."
+                        }
+                        password.isBlank() -> {
+                            viewModel.errorMessage = "Enter your password."
+                        }
+                        else -> {
+                            viewModel.login(
+                                loginData = LoginModel(email, password)
+                            ) { token ->
+                                TokenManager.saveToken(context, token)
+                                navController.navigate("home") {
+                                    popUpTo("login") { inclusive = true }
+                                }
+                            }
                         }
                     }
                 },
-                enabled = !viewModel.isLoading,
+                enabled = !viewModel.isLoading && viewModel.retrySeconds == 0,
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(54.dp),
@@ -188,7 +203,11 @@ fun LoginView(navController: NavController) {
                 )
             ) {
                 Text(
-                    text = if (viewModel.isLoading) "Signing In..." else "Sign In",
+                    text = when {
+                        viewModel.isLoading -> "Signing In..."
+                        viewModel.retrySeconds > 0 -> "Try again in ${viewModel.retrySeconds}s"
+                        else -> "Sign In"
+                    },
                     fontSize = 16.sp,
                     fontWeight = FontWeight.Bold
                 )

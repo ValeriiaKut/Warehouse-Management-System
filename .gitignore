@@ -1,0 +1,7 @@
+.idea/
+**/.idea/
+
+*.iml
+
+.DS_Store
+*** End Patch

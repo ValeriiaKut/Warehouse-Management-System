@@ -1,6 +1,8 @@
 package com.example.frontend.data
 
 import com.example.frontend.model.LoginModel
+import com.example.frontend.model.OrderCreate
+import com.example.frontend.model.OrderModel
 import com.example.frontend.model.ProductCreate
 import com.example.frontend.model.ProductModel
 import com.example.frontend.model.ProductUpdate
@@ -13,6 +15,7 @@ import retrofit2.http.Header
 import retrofit2.http.PUT
 import retrofit2.http.Path
 import retrofit2.http.POST
+import retrofit2.http.Query
 
 interface ApiService {
     @POST("auth/login")
@@ -21,9 +24,18 @@ interface ApiService {
     @POST("auth/register")
     suspend fun register(@Body request: RegisterModel): RegisterResponse
 
+    @GET("auth/me")
+    suspend fun getCurrentUser(
+        @Header("Authorization") authorization: String
+    ): CurrentUserResponse
+
     @GET("products")
     suspend fun getProducts(
-        @Header("Authorization") authorization: String
+        @Header("Authorization") authorization: String,
+        @Query("search") search: String? = null,
+        @Query("min_price") minPrice: Float? = null,
+        @Query("max_price") maxPrice: Float? = null,
+        @Query("low_stock") lowStock: Boolean = false
     ): List<ProductModel>
 
     @POST("products")
@@ -44,6 +56,30 @@ interface ApiService {
         @Header("Authorization") authorization: String,
         @Path("productId") productId: Int
     )
+
+    @GET("orders")
+    suspend fun getOrders(
+        @Header("Authorization") authorization: String
+    ): List<OrderModel>
+
+    @POST("orders")
+    suspend fun createOrder(
+        @Header("Authorization") authorization: String,
+        @Body order: OrderCreate
+    ): OrderModel
+
+    @PUT("orders/{orderId}/status")
+    suspend fun updateOrderStatus(
+        @Header("Authorization") authorization: String,
+        @Path("orderId") orderId: Int,
+        @Query("status") status: String
+    ): OrderModel
+
+    @DELETE("orders/{orderId}")
+    suspend fun deleteOrder(
+        @Header("Authorization") authorization: String,
+        @Path("orderId") orderId: Int
+    )
 }
 
 data class LoginResponse(
@@ -57,5 +93,13 @@ data class LoginResponse(
 data class RegisterResponse(
     val id: Int,
     val username: String,
-    val email: String
+    val email: String,
+    val role: String
+)
+
+data class CurrentUserResponse(
+    val id: Int,
+    val username: String,
+    val email: String,
+    val role: String
 )

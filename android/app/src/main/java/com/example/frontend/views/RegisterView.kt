@@ -118,6 +118,17 @@ fun RegisterView(navController: NavController) {
                 muted = muted
             )
 
+            Spacer(modifier = Modifier.height(8.dp))
+
+            PasswordRequirement(
+                text = "At least 8 characters",
+                isMet = password.length >= 8
+            )
+            PasswordRequirement(
+                text = "Contains a number",
+                isMet = password.any { it.isDigit() }
+            )
+
             Spacer(modifier = Modifier.height(12.dp))
 
             AuthPasswordField(
@@ -140,18 +151,33 @@ fun RegisterView(navController: NavController) {
 
             Button(
                 onClick = {
-                    if (password != passwordConfirm) {
-                        viewModel.errorMessage = "Passwords do not match"
-                    } else {
-                        viewModel.register(
-                            registerData = RegisterModel(
-                                email = email,
-                                password = password,
-                                username = name
-                            )
-                        ) {
-                            navController.navigate("login") {
-                                popUpTo("register") { inclusive = true }
+                    when {
+                        name.isBlank() -> {
+                            viewModel.errorMessage = "Enter your name."
+                        }
+                        email.isBlank() -> {
+                            viewModel.errorMessage = "Enter your email."
+                        }
+                        password.length < 8 -> {
+                            viewModel.errorMessage = "Password must be at least 8 characters long."
+                        }
+                        password.none { it.isDigit() } -> {
+                            viewModel.errorMessage = "Password must contain at least one number."
+                        }
+                        password != passwordConfirm -> {
+                            viewModel.errorMessage = "Passwords do not match."
+                        }
+                        else -> {
+                            viewModel.register(
+                                registerData = RegisterModel(
+                                    email = email,
+                                    password = password,
+                                    username = name
+                                )
+                            ) {
+                                navController.navigate("login") {
+                                    popUpTo("register") { inclusive = true }
+                                }
                             }
                         }
                     }
@@ -176,6 +202,22 @@ fun RegisterView(navController: NavController) {
 
         }
     }
+}
+
+@Composable
+private fun PasswordRequirement(
+    text: String,
+    isMet: Boolean
+) {
+    val green = Color(0xFF7BC88A)
+    val muted = Color(0xFFA7B2AA)
+
+    Text(
+        text = text,
+        color = if (isMet) green else muted,
+        fontSize = 12.sp,
+        modifier = Modifier.padding(start = 4.dp, top = 2.dp)
+    )
 }
 
 @Composable
