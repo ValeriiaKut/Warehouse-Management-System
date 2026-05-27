@@ -2,7 +2,6 @@ package com.example.frontend.data
 
 import com.example.frontend.model.ProductCreate
 import com.example.frontend.model.ProductModel
-import com.google.android.gms.analytics.ecommerce.Product
 import retrofit2.http.Body
 import retrofit2.http.GET
 import retrofit2.http.POST
