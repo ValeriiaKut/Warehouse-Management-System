@@ -122,10 +122,6 @@ fun RegisterView(navController: NavController) {
                 text = "At least 8 characters",
                 isMet = password.length >= 8
             )
-            PasswordRequirement(
-                text = "Contains a number",
-                isMet = password.any { it.isDigit() }
-            )
 
             Spacer(modifier = Modifier.height(12.dp))
 
