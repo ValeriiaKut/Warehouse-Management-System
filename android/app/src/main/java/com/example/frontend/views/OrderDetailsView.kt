@@ -11,13 +11,13 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.ReceiptLong
 import androidx.compose.material.icons.filled.Delete
-import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
@@ -88,6 +88,7 @@ fun OrderDetailsView(
                     listOf(Color(0xFF202A24), background, Color(0xFF0D100F))
                 )
             )
+            .verticalScroll(rememberScrollState())
             .padding(20.dp)
     ) {
         IconButton(onClick = { navController.popBackStack() }) {
@@ -175,33 +176,33 @@ fun OrderDetailsView(
         }
     }
 
-    if (showDeleteDialog && order != null) {
-        AlertDialog(
-            onDismissRequest = { showDeleteDialog = false },
-            title = { Text("Delete order") },
-            text = { Text("Delete order #${order.id}? This cannot be undone.") },
-            confirmButton = {
-                Button(
-                    onClick = {
-                        val currentToken = TokenManager.getToken(context)
-                        if (currentToken != null) {
-                            orderViewModel.deleteOrder(order.id, currentToken) {
-                                navController.popBackStack()
-                            }
-                        }
-                        showDeleteDialog = false
-                    }
-                ) {
-                    Text("Delete")
-                }
-            },
-            dismissButton = {
-                TextButton(onClick = { showDeleteDialog = false }) {
-                    Text("Cancel")
-                }
-            }
-        )
-    }
+//    if (showDeleteDialog && order != null) {
+//        AlertDialog(
+//            onDismissRequest = { showDeleteDialog = false },
+//            title = { Text("Delete order") },
+//            text = { Text("Delete order #${order.id}? This cannot be undone.") },
+//            confirmButton = {
+//                Button(
+//                    onClick = {
+//                        val currentToken = TokenManager.getToken(context)
+//                        if (currentToken != null) {
+//                            orderViewModel.deleteOrder(order.id, currentToken) {
+//                                navController.popBackStack()
+//                            }
+//                        }
+//                        showDeleteDialog = false
+//                    }
+//                ) {
+//                    Text("Delete")
+//                }
+//            },
+//            dismissButton = {
+//                TextButton(onClick = { showDeleteDialog = false }) {
+//                    Text("Cancel")
+//                }
+//            }
+//        )
+//    }
 }
 
 @Composable

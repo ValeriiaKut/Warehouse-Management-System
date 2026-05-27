@@ -1,6 +1,7 @@
 package com.example.frontend.viewmodel
 
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
@@ -15,7 +16,7 @@ import kotlinx.coroutines.launch
 class LoginViewModel : ViewModel() {
     var isLoading by mutableStateOf(false)
     var errorMessage by mutableStateOf<String?>(null)
-    var retrySeconds by mutableStateOf(0)
+    var retrySeconds by mutableIntStateOf(0)
 
     private var retryTimerJob: Job? = null
 

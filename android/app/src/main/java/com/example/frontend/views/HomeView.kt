@@ -389,7 +389,7 @@ private fun FilterTextField(
     field: Color,
     green: Color,
     muted: Color,
-    modifier: Modifier = Modifier.fillMaxWidth(),
+    modifier: Modifier = Modifier,
     keyboardType: KeyboardType = KeyboardType.Text
 ) {
     OutlinedTextField(
